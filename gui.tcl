@@ -1,16 +1,25 @@
 #!/usr/bin/env wish
 
+#TODO Move the popup on parent's <Configure> event
+#TODO 
+
 namespace eval ::text {
 
     proc configureTags {} {
         ::.text tag configure bold -font {Helvetica 18 bold}
     }
 
+    proc trans_selected {} {
+        set sindex [.popup.combo curselection]
+        puts $sindex
+    }
+
     proc enter {} {
-        set width 120
-        set height 250
+        set width 180
+        set height 180
 
         if {[winfo exists .popup] == 1} {
+            enter_close
             return
         }
 
@@ -18,7 +27,6 @@ namespace eval ::text {
         wm overrideredirect .popup 1
 
         set tp_geometry [wm geometry .]
-        puts $tp_geometry
         set x 0
         set y 0
         regexp {\+([0-9]+)\+([0-9]+)} $tp_geometry -> x y
@@ -28,13 +36,25 @@ namespace eval ::text {
         set y [expr $y + [lindex $bbox 1] + [lindex $bbox 3]]
 
         set geometry ${width}x$height+$x+$y
-        puts ${width}x$height+$x+$y
         wm geometry .popup $geometry
+
+        pack [entry .popup.entry]
+        pack [listbox .popup.combo] -fill x -expand yes
+        pack [button .popup.bt_new -text {New Translation}]
+        .popup.combo insert 0 {Some phrase} {Some phrase 2}
+
+        bind .popup.combo <<ListboxSelect>> { ::text::trans_selected }
     }
 
     proc enter_close {} {
         if {[winfo exists .popup] == 1} {
+            puts ".popup exists. Closing"
+            destroy .popup.entry
+            destroy .popup.combo
+            destroy .popup.bt_new
             destroy .popup
+
+            focus .text
         }
     }
 
@@ -95,7 +115,6 @@ namespace eval ::kbd {
         variable handler_Ctrl_b
         variable handler_Ctrl_g
 
-        puts "$s_Pressed $b_Pressed $g_Pressed"
         if { $ctrlPressed == 1 && $s_Pressed == 1 && $lock_Ctrl_s == 0} {
             set lock_Ctrl_s 1
             eval $handler_Ctrl_s
@@ -104,7 +123,6 @@ namespace eval ::kbd {
              eval $handler_Ctrl_b
         } elseif { $ctrlPressed == 1 && $g_Pressed == 1 && $lock_Ctrl_g == 0} {
              set lock_Ctrl_g 1
-             puts {eval $handler_Ctrl_g}
              eval $handler_Ctrl_g
         }
      }
